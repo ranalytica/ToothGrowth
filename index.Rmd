@@ -90,7 +90,13 @@ e1<-e1 + stat_compare_means(label = "p.format", paired = TRUE)
 plot_grid(e,e1)
 ```
 
-The above graph tells us the following:
+The graph on the left tells us the following:
+
+- the median is higher in OJ vs VC
+- the range is more spread out in VC compared to OJ
+- the quantiles
+- The OJ teeth length is concentrated on the higher spectrum of the length
+
 
 - The median increase as the dosage increase
 - VC delivery method is not an effective way of sourcing vitamin c unless it reaches the dose 2 mg per day.
@@ -100,12 +106,14 @@ The above graph tells us the following:
 
 ```{r prepare data}
 
+quantile(dose_.5)
+
 dose_.5 <- ToothGrowth %>% filter(dose=="0.5")
 dose_1 <- ToothGrowth %>% filter(dose==1.0)
 dose_2 <- ToothGrowth %>% filter(dose==2.0)
 
 
-summary(lm(len~supp, data=dose_2))
+summary(lm(len~supp, data=dose_.5))
 ```
 
 
