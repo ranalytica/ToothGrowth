@@ -1,0 +1,118 @@
+---
+title: "Tooth Growth Analysis"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### About the data
+
+Reviewing the help file for "?ToothGrowth" we can see the breakdwon of information as follows:
+
+1. A Study on the effect of two delivery methods Orange Juice or plain old Vitamin C for tooth growth.
+2. Sample size is 60 guinea pigs.
+3. Each animal recieving one of each three doses which are equally divided among 60 guinea pigs.  
+  - 20 receiving .05mg, 20 receiving 1mg, 20 receiving 2mg
+4. The reference link is a paywall but provides as with
+  - a title name "The Growth of the Odontoblasts of the **Incisor** Tooth as a Criterion of the Vitamin C Intake of the Guinea Pig: Five Figures" 
+  - Date Published: 01 May 1947...
+  - First page of the article: which summarises "Canadian Government undertaking study to provide good source of vitamin c for soldiers during war time." 
+  
+str(ToothGrowth) provided the technical information of the dataframe.  
+
+### Environment
+
+![Github](./Octocat.png) [view mycode](https://github.com/ranalytica/ToothGrowth){target="_blank"}
+```{r Envir, message=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(glue)
+library(cowplot)
+library(tinytex)
+library(matrixStats)
+downloadDate <- date()
+
+glue("Simulation date is {downloadDate}")
+sessionInfo()
+```
+
+### Data Loading
+
+```{r load}
+attach(ToothGrowth)
+
+
+```
+
+### Format 
+
+ToothGrowth shows 60 observations on 3 variables
+
+- len - tooth length 
+- supp - Supplement type (VC or OJ)
+- dose - in milligrams/day
+
+using view(toothGrowth) we can see the following:
+
+- range 1:30 len have a supp valuing "VC"
+- range 31:60 len have a supp valuing "OJ"
+- we already know that the guine pigs are also equally the same dossage
+
+```{r structure}
+str(ToothGrowth)
+```
+
+
+```{r look}
+summary(ToothGrowth)
+```
+
+### Exploratoring the data
+
+```{r}
+e<-ggpaired(ToothGrowth, x = "supp", y = "len",
+         color = "supp", line.color = "gray", line.size = 0.4,
+         palette = "jco")+
+  stat_compare_means(paired = TRUE)
+
+# Box plot facetted by "dose"
+e1 <- ggpaired(ToothGrowth, x = "supp", y = "len",
+          color = "supp", palette = "jco", 
+          line.color = "gray", line.size = 0.4,
+          facet.by = "dose", short.panel.labs = FALSE)
+# Use only p.format as label. Remove method name.
+e1<-e1 + stat_compare_means(label = "p.format", paired = TRUE)
+plot_grid(e,e1)
+```
+
+The above graph tells us the following:
+
+- The median increase as the dosage increase
+- VC delivery method is not an effective way of sourcing vitamin c unless it reaches the dose 2 mg per day.
+  - During wartime, carrying an orange juice vs. a tablet is probably a different story.  
+- Orange juice is very effective delivery method for vitamin c.
+- The range on 2mg for OJ decreases - sign of diminishing returns?
+
+```{r prepare data}
+
+dose_.5 <- ToothGrowth %>% filter(dose=="0.5")
+dose_1 <- ToothGrowth %>% filter(dose==1.0)
+dose_2 <- ToothGrowth %>% filter(dose==2.0)
+
+
+summary(lm(len~supp, data=dose_2))
+```
+
+
+```{r}
+fit <- lm(len~factor(dose)+supp, data = ToothGrowth, model =TRUE)
+summary(fit)
+plot(fit)
+```
+
+
