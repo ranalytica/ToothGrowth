@@ -116,7 +116,7 @@ by(ToothGrowth$len, INDICES = list(ToothGrowth$supp, ToothGrowth$dose), summary)
 
 ### Hypothesis Testing
 
-H0 = mean of both OJ and VC are equal
+H0 = mean of both OJ and VC are equal and when subtracted should equal 0
 Ha != H0 There is a difference in mean for VC and OJ 
 
 
@@ -124,7 +124,7 @@ Ha != H0 There is a difference in mean for VC and OJ
 OJ <- ToothGrowth %>% filter(supp=="OJ")
 VC <- ToothGrowth %>% filter(supp=="VC")
 
-t.test(OJ$len,VC$len, paired = TRUE)
+t.test(OJ$len,VC$len, paired = T, var.equal = T)
 ```
 ```{r}
 mu <- ToothGrowth %>% group_by(supp) %>% dplyr::summarise("means"=mean(len))
@@ -163,14 +163,14 @@ Reject the null hypothesis because there are differences between the mean of OJ 
 OJdose_.5 <- ToothGrowth %>% filter(dose==0.5) %>%  filter(supp=="OJ")
 VCdose_.5 <- ToothGrowth %>% filter(dose==0.5) %>%  filter(supp=="VC")
 
-t.test(OJdose_.5$len, VCdose_.5$len, paired = F, var.equal = F)
+t.test(OJdose_.5$len, VCdose_.5$len, paired = T, var.equal = T)
 ```
 
 ```{r}
 OJdose_1 <- ToothGrowth %>% filter(dose==1.0) %>%  filter(supp=="OJ")
 VCdose_1 <- ToothGrowth %>% filter(dose==1.0) %>%  filter(supp=="VC")
 
-t.test(OJdose_1$len- VCdose_1$len)
+t.test(OJdose_1$len, VCdose_1$len, paired = T, var.equal = T)
 ```
 
 
@@ -178,13 +178,15 @@ t.test(OJdose_1$len- VCdose_1$len)
 OJdose_2 <- ToothGrowth %>% filter(dose==2.0) %>%  filter(supp=="OJ")
 VCdose_2 <- ToothGrowth %>% filter(dose==2.0) %>%  filter(supp=="VC")
 
-t.test(OJdose_2$len- VCdose_2$len)
+t.test(OJdose_2$len, VCdose_2$len, paired = T, var.equal = T)
 ```
 
 P-value is .967 not enough to reject the null hypothesis. The difference between OJ mean and VC Mean is -.08 is very close to 0 but still not equal to zero.  
 
-###  Conclusion
+###  Conclusion and Assumptions
 
-There is a significant difference  between tooth length and dose levels across different delivery methods.  A higher dosage led to longer teeth. Based on our evidence, the orange juice delivery method is more effective than the alternative method. At dosage 2 mg, the OJ still has a comparable impact vs. VC but the effectiveness is not the same as the lower dosage.  
+There is a significant difference  between tooth length and dose levels across different delivery methods.  A higher dosage led to longer teeth. Based on our evidence, the orange juice delivery method is more effective than the alternative method. At dosage 2 mg, the OJ still has a comparable impact vs. VC but the effectiveness is not the same as the lower dosage.  There is a .255% chance that H0 = Ha.  This would be a very rare instance.
 
-
+Our assumptions on the data 
+- H0 = Ha  The mean of OJ$len and VC$len are equal
+- They are paired samples T-test and their variance are equal. 
