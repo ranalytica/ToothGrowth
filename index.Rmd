@@ -12,16 +12,16 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### About the data
 
-Reviewing the help file for "?ToothGrowth" we can see the breakdwon of information as follows:
+Reviewing the help file "?ToothGrowth", we can see the breakdown as follows:
 
-1. A Study on the effect of two delivery methods Orange Juice or plain old Vitamin C for tooth growth.
-2. Sample size is 60 guinea pigs.
-3. Each animal recieving one of each three doses which are equally divided among 60 guinea pigs.  
-  - 20 receiving .05mg, 20 receiving 1mg, 20 receiving 2mg
-4. The reference link is a paywall but provides as with
-  - a title name "The Growth of the Odontoblasts of the **Incisor** Tooth as a Criterion of the Vitamin C Intake of the Guinea Pig: Five Figures" 
-  - Date Published: 01 May 1947...
-  - First page of the article: which summarises "Canadian Government undertaking study to provide good source of vitamin c for soldiers during war time." 
+- A Study on the effect of two delivery methods Orange Juice or plain old Vitamin C for tooth growth.
+- Sample size of 60 guinea pigs.
+- Each animal recieving one of each three doses which are equally divided among 60 guinea pigs.
+    - 20 receiving .05 mg OJ/VC, 20 receiving 1 mg OJ/VC, and 20 receiving 2 mg OJ/VC
+- The reference link is a paywall but provides us with;
+    - a title name "The Growth of the Odontoblasts of the **Incisor** Tooth as a Criterion of the Vitamin C Intake of the Guinea Pig: Five Figures" 
+    - Date Published: 01 May 1947.
+    - First page of the article summarises "Canadian Government undertaking study to provide good source of vitamin c for soldiers during war time." 
   
 str(ToothGrowth) provided the technical information of the dataframe.  
 
@@ -45,8 +45,6 @@ sessionInfo()
 
 ```{r load}
 attach(ToothGrowth)
-
-
 ```
 
 ### Format 
@@ -57,11 +55,11 @@ ToothGrowth shows 60 observations on 3 variables
 - supp - Supplement type (VC or OJ)
 - dose - in milligrams/day
 
-using view(toothGrowth) we can see the following:
+Using view(toothGrowth) we can see the following:
 
 - range 1:30 len have a supp valuing "VC"
 - range 31:60 len have a supp valuing "OJ"
-- we already know that the guine pigs are also equally the same dossage
+
 
 ```{r structure}
 str(ToothGrowth)
@@ -72,55 +70,121 @@ str(ToothGrowth)
 summary(ToothGrowth)
 ```
 
-### Exploratoring the data
+### Exploring the data
 
 ```{r}
 e<-ggpaired(ToothGrowth, x = "supp", y = "len",
-         color = "supp", line.color = "gray", line.size = 0.4,
-         palette = "jco")+
-  stat_compare_means(paired = TRUE)
+         color = "supp", line.color = "red", line.size = 0.4,
+         palette = "jco")
 
-# Box plot facetted by "dose"
+
 e1 <- ggpaired(ToothGrowth, x = "supp", y = "len",
           color = "supp", palette = "jco", 
-          line.color = "gray", line.size = 0.4,
+          line.color = "red", line.size = 0.4,
           facet.by = "dose", short.panel.labs = FALSE)
-# Use only p.format as label. Remove method name.
-e1<-e1 + stat_compare_means(label = "p.format", paired = TRUE)
+
+
 plot_grid(e,e1)
 ```
 
 The graph on the left tells us the following:
 
-- the median is higher in OJ vs VC
-- the range is more spread out in VC compared to OJ
-- the quantiles
-- The OJ teeth length is concentrated on the higher spectrum of the length
+- The median is higher in OJ vs VC
+- The range is more spread out in VC compared to OJ
+- The OJ minimum point is higher than VC
+- The VC max point is higher than OJ
+- Look at the quantiles below to see the spread of data across the boxplot
+- OJ quantiles between 50%-75% are in 22.70-25.725 vs. VC which are 16.5-23.1 the distance between them are also staggering 25.725-22.70 = 3.025 for OJ vs. 23.1-16.5 = 6.6.  Mother nature is very effective at delivering vitamin C through OJ.  
 
+```{r VC quantile, echo=FALSE}
+tapply(ToothGrowth$len, ToothGrowth$supp, summary)
+```
+
+The graph on the right tell us the following:
 
 - The median increase as the dosage increase
 - VC delivery method is not an effective way of sourcing vitamin c unless it reaches the dose 2 mg per day.
   - During wartime, carrying an orange juice vs. a tablet is probably a different story.  
 - Orange juice is very effective delivery method for vitamin c.
-- The range on 2mg for OJ decreases - sign of diminishing returns?
+- The OJ range of the box plot on 2 mg decreases - sign of diminishing returns?
+- Their respective p-values
+- Check-out the quantiles below
 
-```{r prepare data}
+```{r dose quantile, echo=FALSE}
+by(ToothGrowth$len, INDICES = list(ToothGrowth$supp, ToothGrowth$dose), summary)
+```
 
-quantile(dose_.5)
+### Hypothesis Testing
 
-dose_.5 <- ToothGrowth %>% filter(dose=="0.5")
-dose_1 <- ToothGrowth %>% filter(dose==1.0)
-dose_2 <- ToothGrowth %>% filter(dose==2.0)
+H0 = mean of both OJ and VC are equal
+Ha != H0 There is a difference in mean for VC and OJ 
 
 
-summary(lm(len~supp, data=dose_.5))
+```{r T-test}
+OJ <- ToothGrowth %>% filter(supp=="OJ")
+VC <- ToothGrowth %>% filter(supp=="VC")
+
+t.test(OJ$len,VC$len, paired = TRUE)
+```
+```{r}
+mu <- ToothGrowth %>% group_by(supp) %>% dplyr::summarise("means"=mean(len))
+
+ggplot(data = ToothGrowth, aes(x=len, color = supp))+geom_density()+
+  geom_vline(data=mu, aes(xintercept=means, color=supp),
+             linetype="dashed")
+```
+```{r}
+x <- OJ$len
+y <- VC$len
+
+OJVC <-data.frame(x,y)
+combOJVC <- OJVC %>% mutate("meanss" =rowMeans(OJVC))
+mu1<-mean(combOJVC$meanss)
+
+ggplot()+geom_density(data = combOJVC, aes(x=meanss), color="blue")+geom_vline(xintercept = mu1, linetype="dashed", color="blue")+labs(title = "OJ/VC Averages")
+```
+
+
+
+```{r}
+lmfit <- lm(ToothGrowth$len~ToothGrowth$supp+ToothGrowth$dose)
+summary(lmfit)
+```
+
+There is a statistically significant difference in means.  
+
+```{r}
+plot(lmfit)
+```
+
+Reject the null hypothesis because there are differences between the mean of OJ and VC.  
+
+```{r T-test dose .5}
+OJdose_.5 <- ToothGrowth %>% filter(dose==0.5) %>%  filter(supp=="OJ")
+VCdose_.5 <- ToothGrowth %>% filter(dose==0.5) %>%  filter(supp=="VC")
+
+t.test(OJdose_.5$len, VCdose_.5$len, paired = F, var.equal = F)
+```
+
+```{r}
+OJdose_1 <- ToothGrowth %>% filter(dose==1.0) %>%  filter(supp=="OJ")
+VCdose_1 <- ToothGrowth %>% filter(dose==1.0) %>%  filter(supp=="VC")
+
+t.test(OJdose_1$len- VCdose_1$len)
 ```
 
 
 ```{r}
-fit <- lm(len~factor(dose)+supp, data = ToothGrowth, model =TRUE)
-summary(fit)
-plot(fit)
+OJdose_2 <- ToothGrowth %>% filter(dose==2.0) %>%  filter(supp=="OJ")
+VCdose_2 <- ToothGrowth %>% filter(dose==2.0) %>%  filter(supp=="VC")
+
+t.test(OJdose_2$len- VCdose_2$len)
 ```
+
+P-value is .967 not enough to reject the null hypothesis. The difference between OJ mean and VC Mean is -.08 is very close to 0 but still not equal to zero.  
+
+###  Conclusion
+
+There is a significant difference  between tooth length and dose levels across different delivery methods.  A higher dosage led to longer teeth. Based on our evidence, the orange juice delivery method is more effective than the alternative method. At dosage 2 mg, the OJ still has a comparable impact vs. VC but the effectiveness is not the same as the lower dosage.  
 
 
