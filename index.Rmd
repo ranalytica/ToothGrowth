@@ -1,9 +1,9 @@
 ---
 title: "Tooth Growth Analysis"
 output:
+  html_document: default
   pdf_document:
     latex_engine: xelatex
-  html_document: default
 ---
 
 ```{r setup, include=FALSE}
